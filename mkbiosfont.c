@@ -28,17 +28,17 @@ struct CONVERSION_PARAMS
 
 void print_version_info()
 {
-    printf("\nSTRIPBMP ver. 0.4.1\n");
+    printf("\nMKBIOSFONT ver. 0.5\n");
     printf("Copyright (c) 2024 by Tobiasz Stamborski\n");
 }
 
 void print_usage_info()
 {
-    printf("\nUsage: stripbmp [slice_size] bmp_file\n");
-    printf("Output: bmp_file.dat with plain video memory data for VGA mode 13h\n");
+    printf("\nUsage: mkbiosfont font_size bmp_file\n");
+    printf("Output: bmp_file.dat with valid 1bpp BIOS font\n");
     printf("Details: bmp_file should be a bmp file in indexed color mode.\n");
-    printf("         slice_size is size of a single frame in the spritesheet.\n");
-    printf("         slice_size should be in a format like \"32x32\" or \"16x8\".\n");
+    printf("         font_size is size of a single character in pixels.\n");
+    printf("         Valid font_size should be \"8x8\", \"8x14\" or \"8x16\".\n");
 }
 
 void print_info()
@@ -55,7 +55,8 @@ void print_error(char *description)
     printf("\n");
 }
 
-int is_microsoft_bmp(FILE *file) {
+int is_microsoft_bmp(FILE *file)
+{
     fseek(file, 0, SEEK_SET);
 
     if (fgetc(file) != 'B')
@@ -66,14 +67,24 @@ int is_microsoft_bmp(FILE *file) {
     return 1;
 }
 
-int is_uncompressed_bmp(FILE *file) {
+int is_uncompressed_bmp(FILE *file)
+{
     fseek(file, 0x1e, SEEK_SET);
     return fgetc(file) == 0 ? 1 : 0;
 }
 
-int is_indexed_bmp(FILE *file) {
+int is_indexed_bmp(FILE *file)
+{
     fseek(file, 0x1c, SEEK_SET);
     return fgetc(file) == 8 ? 1 : 0;
+}
+
+int is_valid_font_size(int fontw, int fonth)
+{
+    if (fontw == 8 && (fonth == 8 || fonth == 14 || fonth == 16))
+        return 1;
+    else
+        return 0;
 }
 
 void read_bmp_params(FILE *file, struct CONVERSION_PARAMS *params)
@@ -100,7 +111,7 @@ void err_exit(char *error_desc)
 
 void convert(FILE *input, FILE *output, struct CONVERSION_PARAMS *params)
 {
-    int byte;
+    int byte, mask;
     int i, j, x, y;
     int cx_slice = params->bmp_width / params->slice_width;
     int cy_slice = params->bmp_height / params->slice_height;
@@ -115,13 +126,19 @@ void convert(FILE *input, FILE *output, struct CONVERSION_PARAMS *params)
 
             for (y = 0; y < params->slice_height; y++)
             {
+                byte = 0;
+                mask = 0x80;
                 for (x = 0; x < params->slice_width; x++)
                 {
-                    byte = fgetc(input);
-                    fputc(byte, output);
+                    if (fgetc(input) != 0)
+                        byte |= mask >> x;
                 }
+                fputc(byte, output);
                 fseek(input, -(params->bmp_width + params->slice_width), SEEK_CUR); /* na poczatek poprzedniej linii */
             }
+
+            if ((j+1)*(cy_slice-i) >= 256) /* charset nie powinien byc wiekszy niz 256 znakow */
+                return;
         }
     }
 }
@@ -181,7 +198,7 @@ char *get_out_filename(char *in_filename)
 
 int main(int argc, char **argv)
 {
-    if (argc < 2 || argc > 3)
+    if (argc != 3)
     {
         print_info();
         return 0;
@@ -201,15 +218,9 @@ int main(int argc, char **argv)
         err_exit("This bitmap is not in the indexed color mode!");
 
     read_bmp_params(in_file, &params);
-    if (argc > 2)
-    {
-        sscanf(argv[1], "%dx%d", &params.slice_width, &params.slice_height);
-    }
-    else
-    {
-        params.slice_width = params.bmp_width;
-        params.slice_height = params.bmp_height;
-    }
+    sscanf(argv[1], "%dx%d", &params.slice_width, &params.slice_height);
+    if (!is_valid_font_size(params.slice_width, params.slice_height))
+        err_exit("Invalid font size! Possible choices are 8x8, 8x14 or 8x16!");
 
     out_file = fopen(get_out_filename(argv[argc-1]), "w");
     convert(in_file, out_file, &params);
