@@ -10,6 +10,9 @@ PATH environment variable (and use it from command line).
 This tool extracts pixel data from indexed mode BMP files, swap lines (images in BMP format are
 held upside-down) and optionally slice your spritesheet into sequentially held slices of desired
 size. **So output files are very handy to embed in assembly source code or something like that.**
+```
+Usage: stripbmp [slice_size] bmp_file
+```
 
 Recently I have added second, very similiar, tool for creating BIOS fonts from indexed BMP files.
 BIOS fonts are 1 bit per pixel images. My "mkbiosfont" tool threat every not-zero pixel in BMP file
