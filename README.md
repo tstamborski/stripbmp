@@ -2,7 +2,7 @@
 Command line tool to convert BMP images to plain video memory data in mode 13h.
 
 ## Downloads
-Here you can find version for download: [stripbmp.zip](https://github.com/tstamborski/stripbmp/releases/download/v0.4/stripbmp.zip).
+Here you can find version for download: [stripbmp.zip](https://github.com/tstamborski/stripbmp/releases/download/v0.5/stripbmp.zip).
 Zip package contains executables for 64-bit Linux and Windows. Simplest way to use it is to just copy your executable somewhere in the
 PATH environment variable (and use it from command line).
 
