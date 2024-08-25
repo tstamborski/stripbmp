@@ -1,4 +1,5 @@
-all: build/win64/stripbmp.exe build/linux64/stripbmp build/win64/mkbiosfont.exe build/linux64/mkbiosfont
+all: build/win64/stripbmp.exe build/linux64/stripbmp build/win64/mkbiosfont.exe build/linux64/mkbiosfont build/win64/rle.exe build/linux64/rle\
+build/win64/rld.exe build/linux64/rld
 
 build/win64/%.exe: %.c
 	if [ ! -d build ]; then mkdir build; fi
